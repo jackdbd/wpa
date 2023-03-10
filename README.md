@@ -16,8 +16,4 @@ npm run dev
 
 ## Deploy
 
-Deploy to Cloudflare Pages:
-
-```sh
-npm run deploy
-```
+Deploy is done automatically with the Cloudflare Pages-GitHub integration.
