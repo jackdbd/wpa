@@ -1,0 +1,8 @@
+{
+  "recommendations": [
+    "bierner.lit-html",
+    "chakrounanas.turbo-console-log",
+    "christian-kohler.npm-intellisense",
+    "pflannery.vscode-versionlens"
+  ]
+}
