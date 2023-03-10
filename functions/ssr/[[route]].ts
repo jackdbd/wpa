@@ -6,20 +6,67 @@ import { html } from "hono/html";
 const app = new Hono();
 app.use("*", logger());
 
+// let hasThirdParties = false;
+let third_parties = [] as string[];
+
 // app.notFound((ctx) => {
 // const params = ctx.req.param();
 //   return ctx.json({ message: "Not Found", ok: false }, 404);
 // });
 
-const headHandlers = {
+const headHandlers: HTMLRewriterElementContentHandlers = {
   comments: (c) => {
     console.log("comment in <head>", c.text);
   },
 };
 
-const aHrefHandlers = {
+const injectOnLoad = (third_parties: string[]) => {
+  console.log(`inject ${third_parties.length} snippets in window.onload`);
+  return `window.onload = (event) => {
+    console.log('page is fully loaded', event);
+    console.log('load some 3rd party script');
+  }`;
+};
+
+const docHandlers: HTMLRewriterDocumentContentHandlers = {
+  end: (docEnd) => {
+    console.log("🚀 ~ docEnd:", docEnd);
+  },
+};
+
+const bodyHandlers: HTMLRewriterElementContentHandlers = {
   element: (el) => {
-    const before = `${el.getAttribute("href")}`;
+    el.onEndTag((tag) => {
+      tag.before(`<script>${injectOnLoad(third_parties)}</script>`, {
+        html: true,
+      });
+    });
+  },
+};
+
+const scriptHandlers: HTMLRewriterElementContentHandlers = {
+  element: (el) => {
+    const src = el.getAttribute("src");
+    if (src) {
+      const matches = src.match(
+        /^https:\/\/www\.googletagmanager\.com\/gtag\/js\?id=.*/
+      );
+      if (matches) {
+        third_parties.push(src);
+        el.remove();
+        // const my_script = document.createElement('script');
+        // my_script.setAttribute('src','http://example.com/site.js');
+        // document.body.appendChild(my_script)
+      }
+    }
+    // el.setAttribute("href", "https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+    // console.log(`${before} => ${el.getAttribute("href")}`);
+  },
+};
+
+const aHrefHandlers: HTMLRewriterElementContentHandlers = {
+  element: (el) => {
+    const before = el.getAttribute("href");
     el.setAttribute("href", "https://www.youtube.com/watch?v=dQw4w9WgXcQ");
     console.log(`${before} => ${el.getAttribute("href")}`);
   },
@@ -38,7 +85,10 @@ const aHrefHandlers = {
 };
 
 const rewriter = new HTMLRewriter()
+  .onDocument(docHandlers)
   .on("head", headHandlers)
+  .on("head script", scriptHandlers)
+  .on("body", bodyHandlers)
   .on("a[href]", aHrefHandlers);
 
 app.get("/aaa", (ctx) => {
@@ -54,6 +104,10 @@ app.get("/aaa", (ctx) => {
         <!-- TODO: <link rel="canonical" href="{{ absolute page URL }}"> -->
         <!-- TODO: OGP meta Tags for Facebook -->
         <!-- TODO: Twitter card -->
+        <script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=G-DNJN1PF3CS"
+        ></script>
       </head>
       <body>
         <h1>AAA Route</h1>
