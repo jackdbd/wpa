@@ -10,7 +10,9 @@
     "workers"
   ],
   "scripts": {
-    "deploy": "wrangler pages publish ./pages",
+    "build": "cp -r pages/ dist/",
+    "clean": "rm -rf dist/",
+    "deploy": "npm run build && wrangler pages publish ./dist",
     "dev": "wrangler pages dev ./pages --live-reload --compatibility-date=2023-03-10"
   },
   "dependencies": {
